@@ -4,11 +4,13 @@ import { useState } from "react"
 import { Sidebar } from "@/components/sidebar"
 import { Header } from "@/components/header"
 import { ChatInterface } from "@/components/chat-interface"
+import { BusinessDiagnosticModal } from "@/components/business-diagnostic-modal"
 import type { BusinessProfile } from "@/lib/business-diagnostic"
 import { ragEngine } from "@/lib/rag-engine"
 
 export default function HomePage() {
   const [businessProfile, setBusinessProfile] = useState<BusinessProfile | null>(null)
+  const [showDiagnostic, setShowDiagnostic] = useState(false)
 
   const [messages, setMessages] = useState<
     Array<{
@@ -35,6 +37,37 @@ export default function HomePage() {
     ragEngine.setBusinessProfile(profile)
   }
 
+  const isDiagnosticAcceptance = (message: string): boolean => {
+    const lowerMessage = message.toLowerCase().trim()
+    const acceptancePatterns = [
+      "sí",
+      "si",
+      "yes",
+      "claro",
+      "por supuesto",
+      "me gustaría",
+      "me gustaria",
+      "sí me gustaría",
+      "si me gustaria",
+      "acepto",
+      "ok",
+      "okay",
+      "dale",
+      "perfecto",
+      "excelente",
+      "hagámoslo",
+      "hagamoslo",
+    ]
+
+    return acceptancePatterns.some((pattern) => lowerMessage.includes(pattern) && lowerMessage.length < 50)
+  }
+
+  const wasLastMessageDiagnosticOffer = (): boolean => {
+    const lastAssistantMessage = messages.filter((m) => m.role === "assistant").slice(-1)[0]
+
+    return lastAssistantMessage?.content.includes("diagnóstico rápido") || false
+  }
+
   const handleSidebarMessage = (message: string) => {
     const userMessage = {
       id: Date.now().toString(),
@@ -45,7 +78,28 @@ export default function HomePage() {
     const updatedMessages = [...messages, userMessage]
     setMessages(updatedMessages)
 
+    if (isDiagnosticAcceptance(message) && wasLastMessageDiagnosticOffer()) {
+      setShowDiagnostic(true)
+      return
+    }
+
     handleApiResponse(message, updatedMessages)
+  }
+
+  const handleDiagnosticComplete = (profile: BusinessProfile, insights: string) => {
+    setBusinessProfile(profile)
+    setShowDiagnostic(false)
+
+    // Add diagnostic completion message
+    const diagnosticMessage = {
+      id: Date.now().toString(),
+      content: `¡Excelente! He completado tu diagnóstico empresarial. ${insights}`,
+      role: "assistant" as const,
+      timestamp: new Date(),
+      isStructured: true,
+    }
+
+    setMessages((prev) => [...prev, diagnosticMessage])
   }
 
   const handleApiResponse = async (message: string, currentMessages: typeof messages) => {
@@ -101,6 +155,12 @@ export default function HomePage() {
           onBusinessProfileUpdate={handleBusinessProfileUpdate}
         />
       </div>
+
+      <BusinessDiagnosticModal
+        isOpen={showDiagnostic}
+        onClose={() => setShowDiagnostic(false)}
+        onComplete={handleDiagnosticComplete}
+      />
     </div>
   )
 }
