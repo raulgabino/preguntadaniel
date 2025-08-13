@@ -1,16 +1,19 @@
 "use client"
 
 import { useState } from "react"
+import { Menu } from "lucide-react"
 import { Sidebar } from "@/components/sidebar"
 import { Header } from "@/components/header"
 import { ChatInterface } from "@/components/chat-interface"
 import { BusinessDiagnosticModal } from "@/components/business-diagnostic-modal"
+import { Button } from "@/components/ui/button"
 import type { BusinessProfile } from "@/lib/business-diagnostic"
 import { ragEngine } from "@/lib/rag-engine"
 
 export default function HomePage() {
   const [businessProfile, setBusinessProfile] = useState<BusinessProfile | null>(null)
   const [showDiagnostic, setShowDiagnostic] = useState(false)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   const [messages, setMessages] = useState<
     Array<{
@@ -33,7 +36,6 @@ export default function HomePage() {
 
   const handleBusinessProfileUpdate = (profile: BusinessProfile) => {
     setBusinessProfile(profile)
-    // Update RAG engine with new profile
     ragEngine.setBusinessProfile(profile)
   }
 
@@ -69,6 +71,8 @@ export default function HomePage() {
   }
 
   const handleSidebarMessage = (message: string) => {
+    setIsSidebarOpen(false)
+
     const userMessage = {
       id: Date.now().toString(),
       content: message,
@@ -90,7 +94,6 @@ export default function HomePage() {
     setBusinessProfile(profile)
     setShowDiagnostic(false)
 
-    // Add diagnostic completion message
     const diagnosticMessage = {
       id: Date.now().toString(),
       content: `¡Excelente! He completado tu diagnóstico empresarial. ${insights}`,
@@ -145,8 +148,29 @@ export default function HomePage() {
 
   return (
     <div className="flex h-screen bg-amber-50">
-      <Sidebar onSendMessage={handleSidebarMessage} />
-      <div className="flex-1 flex flex-col">
+      {isSidebarOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" onClick={() => setIsSidebarOpen(false)} />
+      )}
+
+      <div
+        className={`
+        fixed lg:relative inset-y-0 left-0 z-50 lg:z-auto
+        transform ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} 
+        lg:translate-x-0 transition-transform duration-300 ease-in-out
+      `}
+      >
+        <Sidebar onSendMessage={handleSidebarMessage} />
+      </div>
+
+      <div className="flex-1 flex flex-col min-w-0">
+        <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-amber-200">
+          <Button variant="ghost" size="sm" onClick={() => setIsSidebarOpen(true)} className="text-amber-600">
+            <Menu className="w-5 h-5" />
+          </Button>
+          <h1 className="font-bold text-lg text-amber-600">Daniel Marcos</h1>
+          <div className="w-9" /> {/* Spacer for centering */}
+        </div>
+
         <Header />
         <ChatInterface
           messages={messages}

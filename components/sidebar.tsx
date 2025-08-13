@@ -55,38 +55,38 @@ export function Sidebar({ onSendMessage }: SidebarProps) {
   ]
 
   return (
-    <aside className="w-80 bg-white border-r border-amber-200 p-6">
-      <div className="mb-8">
-        <h2 className="font-bold text-lg text-gray-800 mb-2 font-sans">Frameworks de Negocio</h2>
-        <p className="text-sm text-gray-600">Áreas clave para escalar tu empresa</p>
+    <aside className="w-80 sm:w-80 bg-white border-r border-amber-200 p-4 sm:p-6 h-full overflow-y-auto">
+      <div className="mb-6 sm:mb-8">
+        <h2 className="font-bold text-base sm:text-lg text-gray-800 mb-2 font-sans">Frameworks de Negocio</h2>
+        <p className="text-xs sm:text-sm text-gray-600">Áreas clave para escalar tu empresa</p>
       </div>
 
-      <div className="space-y-3 mb-8">
+      <div className="space-y-2 sm:space-y-3 mb-6 sm:mb-8">
         {frameworks.map((framework) => (
           <Card
             key={framework.name}
-            className={`p-4 ${framework.bgColor} transition-colors cursor-pointer border-l-4 border-l-transparent hover:border-l-current`}
+            className={`p-3 sm:p-4 ${framework.bgColor} transition-colors cursor-pointer border-l-4 border-l-transparent hover:border-l-current active:scale-95 transition-transform`}
             onClick={() => onSendMessage(framework.prompt)}
           >
-            <div className="flex items-start gap-3">
-              <framework.icon className={`w-5 h-5 ${framework.color} mt-0.5`} />
-              <div>
-                <span className="font-medium text-gray-800 block">{framework.name}</span>
-                <span className="text-xs text-gray-600">{framework.description}</span>
+            <div className="flex items-start gap-2 sm:gap-3">
+              <framework.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${framework.color} mt-0.5 flex-shrink-0`} />
+              <div className="min-w-0">
+                <span className="font-medium text-gray-800 block text-sm sm:text-base">{framework.name}</span>
+                <span className="text-xs text-gray-600 break-words">{framework.description}</span>
               </div>
             </div>
           </Card>
         ))}
       </div>
 
-      <div className="space-y-4">
-        <h3 className="font-semibold text-gray-800 font-sans">Consultas Rápidas</h3>
+      <div className="space-y-3 sm:space-y-4">
+        <h3 className="font-semibold text-gray-800 font-sans text-sm sm:text-base">Consultas Rápidas</h3>
         <div className="space-y-2">
           {quickPrompts.map((prompt, index) => (
             <button
               key={index}
               onClick={() => onSendMessage(prompt)}
-              className="w-full text-left p-3 text-sm bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors border border-transparent hover:border-amber-200"
+              className="w-full text-left p-2 sm:p-3 text-xs sm:text-sm bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors border border-transparent hover:border-amber-200 active:scale-95 transition-transform break-words"
             >
               {prompt}
             </button>
