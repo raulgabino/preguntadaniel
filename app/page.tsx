@@ -164,8 +164,14 @@ export default function HomePage() {
 
       <div className="flex-1 flex flex-col min-w-0">
         <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-amber-200">
-          <Button variant="ghost" size="sm" onClick={() => setIsSidebarOpen(true)} className="text-amber-600">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsSidebarOpen(true)}
+            className="text-amber-600 flex items-center gap-2 px-2"
+          >
             <Menu className="w-5 h-5" />
+            <span className="text-sm font-medium">Consultas Rápidas</span>
           </Button>
           <h1 className="font-bold text-lg text-amber-600">Daniel Marcos</h1>
           <div className="w-9" /> {/* Spacer for centering */}
