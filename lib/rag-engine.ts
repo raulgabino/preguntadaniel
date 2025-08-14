@@ -25,6 +25,11 @@ export interface RAGResponse {
   isStructured?: boolean
 }
 
+interface ChatMessage {
+  role: "user" | "assistant"
+  content: string
+}
+
 import { vectorSearchEngine } from "./vector-search"
 import { openaiClient } from "./openai-client"
 import type { BusinessProfile } from "./business-diagnostic"
@@ -123,22 +128,49 @@ export class RAGEngine {
     return selected.slice(0, 6)
   }
 
+  private createConversationalContext(history: ChatMessage[]): string {
+    if (!history || history.length < 2) return ""
+
+    // Take the last 4 messages (2 conversation turns) without including the current question
+    const relevantHistory = history.slice(-5, -1)
+
+    if (relevantHistory.length === 0) return ""
+
+    const contextSummary = relevantHistory
+      .map((msg) => `${msg.role === "assistant" ? "Tú dijiste" : "El empresario dijo"}: "${msg.content}"`)
+      .join("\n")
+
+    return `CONTEXTO DE LA CONVERSACIÓN RECIENTE:
+---
+${contextSummary}
+---
+Ahora, responde a la nueva pregunta del empresario, continuando la conversación de manera lógica.`
+  }
+
   private async composeResponse(
     userQuery: string,
     intent: IntentClassification,
     passages: VectorSearchResult[],
+    history: ChatMessage[] = [],
   ): Promise<{ content: string; isStructured: boolean }> {
     if (this.isGeneralQuestion(userQuery)) {
       return { content: this.generateGeneralResponse(), isStructured: false }
     }
     const framework = intent.framework || this.inferFrameworkFromPassages(passages)
     const context = passages.map((p) => p.text_clean).join("\n\n")
+    const conversationalContext = this.createConversationalContext(history)
     const systemPrompt = this.createPersonalizedSystemPrompt()
-    const userPrompt = this.createPersonalizedUserPrompt(userQuery, context)
+    const userPrompt = this.createPersonalizedUserPrompt(userQuery, context, conversationalContext)
     try {
       const shouldBeStructured = this.shouldUseStructuredFormat(userQuery, intent)
       if (shouldBeStructured) {
-        const structuredResponse = await this.generateStructuredResponse(userQuery, intent, passages, context)
+        const structuredResponse = await this.generateStructuredResponse(
+          userQuery,
+          intent,
+          passages,
+          context,
+          conversationalContext,
+        )
         return { content: structuredResponse, isStructured: true }
       }
       const response = await openaiClient.generateResponse(userPrompt, systemPrompt)
@@ -203,12 +235,14 @@ REGLAS DE CONVERSACIÓN Y ESTRUCTURA:
 Responde como Daniel Marcos lo haría en una sesión de consultoría cara a cara, aplicando estas reglas para crear una conversación valiosa y natural.`
   }
 
-  private createPersonalizedUserPrompt(userQuery: string, context: string): string {
+  private createPersonalizedUserPrompt(userQuery: string, context: string, conversationalContext: string): string {
     let profileContext = ""
     if (this.businessProfile) {
       profileContext = `El empresario tiene una empresa de ${this.businessProfile.employees} empleados en ${this.businessProfile.industry}, en fase ${this.businessProfile.phase}, con enfoque actual en ${this.businessProfile.currentFocus}.`
     }
-    return `Un empresario te pregunta: "${userQuery}"
+    return `${conversationalContext}
+
+Un empresario te pregunta: "${userQuery}"
 ${profileContext}
 
 Basándote en tu experiencia y conocimiento:
@@ -255,6 +289,7 @@ Responde de forma natural y conversacional, como si estuvieras en una sesión de
     intent: IntentClassification,
     passages: VectorSearchResult[],
     context: string,
+    conversationalContext: string,
   ): Promise<string> {
     const framework = intent.framework || this.inferFrameworkFromPassages(passages)
 
@@ -262,6 +297,8 @@ Responde de forma natural y conversacional, como si estuvieras en una sesión de
     const responseTemplate = this.getResponseTemplate(framework)
 
     const structuredPrompt = `${this.createPersonalizedSystemPrompt()}
+
+${conversationalContext}
 
 USA ESTA PLANTILLA PARA FORMATEAR TU RESPUESTA:
 ---
@@ -336,7 +373,7 @@ Ahora, genera la respuesta siguiendo la plantilla y las reglas de conversación.
     return `¡Hola! Soy Daniel Marcos, consultor empresarial. Para darte el mejor consejo, necesito entender tu negocio. **¿Te gustaría hacer un diagnóstico rápido de 2 minutos?** O puedes preguntarme directamente sobre cualquier desafío que tengas en las áreas de People, Strategy, Execution o Cash.`
   }
 
-  async processQuery(userQuery: string): Promise<RAGResponse> {
+  async processQuery(userQuery: string, history: ChatMessage[] = []): Promise<RAGResponse> {
     try {
       if (this.isGeneralQuestion(userQuery)) {
         return { content: this.generateGeneralResponse(), citations: [], isStructured: false }
@@ -349,7 +386,7 @@ Ahora, genera la respuesta siguiendo la plantilla y las reglas de conversación.
         language: intent.language,
       })
       const selectedPassages = this.selectRelevantPassages(passages, intent.intent)
-      const { content, isStructured } = await this.composeResponse(userQuery, intent, selectedPassages)
+      const { content, isStructured } = await this.composeResponse(userQuery, intent, selectedPassages, history)
       return { content, citations: [], isStructured }
     } catch (error) {
       console.error("RAG processing error:", error)

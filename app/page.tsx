@@ -23,6 +23,8 @@ export default function HomePage() {
       timestamp: Date
       citations?: Array<{ source: string; timestamp: string }>
       isStructured?: boolean
+      isChart?: boolean
+      chartData?: any
     }>
   >([
     {
@@ -114,6 +116,7 @@ export default function HomePage() {
         },
         body: JSON.stringify({
           message,
+          history: currentMessages,
           businessProfile: businessProfile,
         }),
       })
@@ -131,6 +134,8 @@ export default function HomePage() {
         timestamp: new Date(),
         citations: data.citations,
         isStructured: data.isStructured,
+        isChart: data.isChart,
+        chartData: data.chartData,
       }
 
       setMessages([...currentMessages, assistantMessage])

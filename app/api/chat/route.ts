@@ -3,7 +3,7 @@ import { ragEngine } from "@/lib/rag-engine"
 
 export async function POST(request: NextRequest) {
   try {
-    const { message, businessProfile } = await request.json()
+    const { message, history, businessProfile } = await request.json()
 
     if (!message || typeof message !== "string") {
       return NextResponse.json({ error: "Message is required" }, { status: 400 })
@@ -25,8 +25,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(chartResponse)
     }
 
-    // Process the query through RAG engine
-    const response = await ragEngine.processQuery(message)
+    const response = await ragEngine.processQuery(message, history)
 
     return NextResponse.json({
       content: response.content,
