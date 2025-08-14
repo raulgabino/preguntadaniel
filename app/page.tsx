@@ -8,13 +8,12 @@ import { ChatInterface } from "@/components/chat-interface"
 import { BusinessDiagnosticModal } from "@/components/business-diagnostic-modal"
 import { Button } from "@/components/ui/button"
 import type { BusinessProfile } from "@/lib/business-diagnostic"
+import { generatePersonalizedInsights } from "@/lib/business-diagnostic"
 import { ragEngine } from "@/lib/rag-engine"
 
 export default function HomePage() {
   const [businessProfile, setBusinessProfile] = useState<BusinessProfile | null>(null)
-  const [showDiagnostic, setShowDiagnostic] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-
   const [messages, setMessages] = useState<
     Array<{
       id: string
@@ -28,15 +27,7 @@ export default function HomePage() {
       isSimulation?: boolean
       characterName?: string
     }>
-  >([
-    {
-      id: "1",
-      content:
-        "¡Hola! Soy Juan Pérez, tu consultor de escalamiento empresarial. Además de responder tus dudas sobre negocios, puedo ayudarte a practicar conversaciones difíciles mediante simulaciones interactivas.\n\n**¿Cómo usar esta plataforma?**\n• Haz preguntas específicas sobre tu negocio\n• Usa las consultas rápidas del menú lateral\n• Solicita un diagnóstico empresarial gratuito\n• Pide gráficos escribiendo 'genera un gráfico de...'\n• **NUEVO:** Practica conversaciones diciendo 'quiero practicar una conversación'\n\n¿Qué desafío específico estás enfrentando hoy?",
-      role: "assistant",
-      timestamp: new Date(),
-    },
-  ])
+  >([])
 
   const [simulationState, setSimulationState] = useState({
     isActive: false,
@@ -44,40 +35,18 @@ export default function HomePage() {
     context: "",
   })
 
-  const handleBusinessProfileUpdate = (profile: BusinessProfile) => {
+  const handleDiagnosticComplete = (profile: BusinessProfile) => {
     setBusinessProfile(profile)
     ragEngine.setBusinessProfile(profile)
-  }
-
-  const isDiagnosticAcceptance = (message: string): boolean => {
-    const lowerMessage = message.toLowerCase().trim()
-    const acceptancePatterns = [
-      "sí",
-      "si",
-      "yes",
-      "claro",
-      "por supuesto",
-      "me gustaría",
-      "me gustaria",
-      "sí me gustaría",
-      "si me gustaria",
-      "acepto",
-      "ok",
-      "okay",
-      "dale",
-      "perfecto",
-      "excelente",
-      "hagámoslo",
-      "hagamoslo",
-    ]
-
-    return acceptancePatterns.some((pattern) => lowerMessage.includes(pattern) && lowerMessage.length < 50)
-  }
-
-  const wasLastMessageDiagnosticOffer = (): boolean => {
-    const lastAssistantMessage = messages.filter((m) => m.role === "assistant").slice(-1)[0]
-
-    return lastAssistantMessage?.content.includes("diagnóstico rápido") || false
+    const insights = generatePersonalizedInsights(profile)
+    const initialMessage = {
+      id: "1",
+      content: `¡Excelente! He completado tu diagnóstico empresarial. ${insights}`,
+      role: "assistant" as const,
+      timestamp: new Date(),
+      isStructured: true,
+    }
+    setMessages([initialMessage])
   }
 
   const handleSidebarMessage = (message: string) => {
@@ -91,28 +60,7 @@ export default function HomePage() {
     }
     const updatedMessages = [...messages, userMessage]
     setMessages(updatedMessages)
-
-    if (isDiagnosticAcceptance(message) && wasLastMessageDiagnosticOffer()) {
-      setShowDiagnostic(true)
-      return
-    }
-
     handleApiResponse(message, updatedMessages)
-  }
-
-  const handleDiagnosticComplete = (profile: BusinessProfile, insights: string) => {
-    setBusinessProfile(profile)
-    setShowDiagnostic(false)
-
-    const diagnosticMessage = {
-      id: Date.now().toString(),
-      content: `¡Excelente! He completado tu diagnóstico empresarial. ${insights}`,
-      role: "assistant" as const,
-      timestamp: new Date(),
-      isStructured: true,
-    }
-
-    setMessages((prev) => [...prev, diagnosticMessage])
   }
 
   const handleApiResponse = async (message: string, currentMessages: typeof messages) => {
@@ -126,7 +74,7 @@ export default function HomePage() {
           message,
           history: currentMessages,
           businessProfile: businessProfile,
-          simulationState: simulationState, // Send simulation state to API
+          simulationState: simulationState,
         }),
       })
 
@@ -149,8 +97,8 @@ export default function HomePage() {
         isStructured: data.isStructured,
         isChart: data.isChart,
         chartData: data.chartData,
-        isSimulation: data.isSimulation, // Handle simulation messages
-        characterName: data.characterName, // Handle character names
+        isSimulation: data.isSimulation,
+        characterName: data.characterName,
       }
 
       setMessages([...currentMessages, assistantMessage])
@@ -164,6 +112,20 @@ export default function HomePage() {
       }
       setMessages([...currentMessages, errorMessage])
     }
+  }
+
+  if (!businessProfile) {
+    return (
+      <div className="flex h-screen bg-amber-50 items-center justify-center">
+        <BusinessDiagnosticModal
+          isOpen={true}
+          onClose={() => {
+            /* Non-closable until complete */
+          }}
+          onComplete={handleDiagnosticComplete}
+        />
+      </div>
+    )
   }
 
   return (
@@ -202,15 +164,9 @@ export default function HomePage() {
           messages={messages}
           setMessages={setMessages}
           businessProfile={businessProfile}
-          onBusinessProfileUpdate={handleBusinessProfileUpdate}
+          onBusinessProfileUpdate={setBusinessProfile}
         />
       </div>
-
-      <BusinessDiagnosticModal
-        isOpen={showDiagnostic}
-        onClose={() => setShowDiagnostic(false)}
-        onComplete={handleDiagnosticComplete}
-      />
     </div>
   )
 }
