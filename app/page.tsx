@@ -25,16 +25,24 @@ export default function HomePage() {
       isStructured?: boolean
       isChart?: boolean
       chartData?: any
+      isSimulation?: boolean
+      characterName?: string
     }>
   >([
     {
       id: "1",
       content:
-        "¡Hola! Soy Daniel Marcos, tu consultor de escalamiento empresarial. Estoy aquí para ayudarte a desbloquear el potencial de tu negocio usando mis frameworks probados: People, Strategy, Execution y Cash.\n\n**¿Cómo usar esta plataforma?**\n• Haz preguntas específicas sobre tu negocio\n• Usa las consultas rápidas del menú lateral\n• Solicita un diagnóstico empresarial gratuito\n• Pide gráficos o visualizaciones escribiendo 'genera un gráfico de...'\n\n¿Qué desafío específico estás enfrentando hoy?",
+        "¡Hola! Soy Daniel Marcos, tu consultor de escalamiento empresarial. Además de responder tus dudas sobre negocios, puedo ayudarte a practicar conversaciones difíciles mediante simulaciones interactivas.\n\n**¿Cómo usar esta plataforma?**\n• Haz preguntas específicas sobre tu negocio\n• Usa las consultas rápidas del menú lateral\n• Solicita un diagnóstico empresarial gratuito\n• Pide gráficos escribiendo 'genera un gráfico de...'\n• **NUEVO:** Practica conversaciones diciendo 'quiero practicar una conversación'\n\n¿Qué desafío específico estás enfrentando hoy?",
       role: "assistant",
       timestamp: new Date(),
     },
   ])
+
+  const [simulationState, setSimulationState] = useState({
+    isActive: false,
+    characterName: "",
+    context: "",
+  })
 
   const handleBusinessProfileUpdate = (profile: BusinessProfile) => {
     setBusinessProfile(profile)
@@ -118,6 +126,7 @@ export default function HomePage() {
           message,
           history: currentMessages,
           businessProfile: businessProfile,
+          simulationState: simulationState, // Send simulation state to API
         }),
       })
 
@@ -126,6 +135,10 @@ export default function HomePage() {
       }
 
       const data = await response.json()
+
+      if (data.simulationState) {
+        setSimulationState(data.simulationState)
+      }
 
       const assistantMessage = {
         id: (Date.now() + 1).toString(),
@@ -136,6 +149,8 @@ export default function HomePage() {
         isStructured: data.isStructured,
         isChart: data.isChart,
         chartData: data.chartData,
+        isSimulation: data.isSimulation, // Handle simulation messages
+        characterName: data.characterName, // Handle character names
       }
 
       setMessages([...currentMessages, assistantMessage])

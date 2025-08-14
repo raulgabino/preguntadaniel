@@ -2,7 +2,8 @@ import { User, Bot } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { CitationSystem } from "./citation-system"
 import { ChartGenerator } from "./chart-generator"
-import { FormattedResponse } from "./formatted-response" // Added FormattedResponse import
+import { FormattedResponse } from "./formatted-response"
+import { SimulationBubble } from "./simulation-bubble"
 
 interface Message {
   id: string
@@ -16,7 +17,9 @@ interface Message {
     data: any[]
   }
   isChart?: boolean
-  isStructured?: boolean // Added isStructured property for conditional rendering
+  isStructured?: boolean
+  isSimulation?: boolean
+  characterName?: string
 }
 
 interface MessageBubbleProps {
@@ -25,6 +28,10 @@ interface MessageBubbleProps {
 
 export function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === "user"
+
+  if (message.isSimulation) {
+    return <SimulationBubble content={message.content} characterName={message.characterName || "Personaje"} />
+  }
 
   return (
     <div className={`flex gap-3 sm:gap-4 ${isUser ? "flex-row-reverse" : "flex-row"}`}>

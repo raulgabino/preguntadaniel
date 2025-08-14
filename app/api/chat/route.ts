@@ -3,7 +3,25 @@ import { ragEngine } from "@/lib/rag-engine"
 
 export async function POST(request: NextRequest) {
   try {
-    const { message, history, businessProfile } = await request.json()
+    const { message, history, businessProfile, simulationState } = await request.json()
+
+    const simulationKeywords = /practicar|simular|role-play|roleplay|conversación difícil/i
+    const endSimulationKeywords = /terminar simulación|fin de la simulación|salir del modo|terminar práctica/i
+
+    if (endSimulationKeywords.test(message) && simulationState?.isActive) {
+      const response = await ragEngine.getSimulationFeedback(history)
+      return NextResponse.json(response)
+    }
+
+    if (simulationState?.isActive) {
+      const response = await ragEngine.runSimulationTurn(message, history, simulationState)
+      return NextResponse.json(response)
+    }
+
+    if (simulationKeywords.test(message)) {
+      const response = await ragEngine.startSimulation(message, history)
+      return NextResponse.json(response)
+    }
 
     if (!message || typeof message !== "string") {
       return NextResponse.json({ error: "Message is required" }, { status: 400 })
@@ -20,7 +38,6 @@ export async function POST(request: NextRequest) {
     const isChartRequest = /gráfic[ao]|visualiz|chart|diagrama|esquema|hazlo en gráfica/i.test(message)
 
     if (isChartRequest) {
-      // Generate chart data based on the request
       const chartResponse = await generateChartResponse(message, businessProfile)
       return NextResponse.json(chartResponse)
     }
@@ -66,7 +83,6 @@ export async function POST(request: NextRequest) {
 }
 
 async function generateChartResponse(message: string, businessProfile: any) {
-  // Determine chart type based on message content
   let chartType = "bar"
   let chartData = []
   let title = "Análisis Empresarial"
@@ -106,7 +122,6 @@ async function generateChartResponse(message: string, businessProfile: any) {
       { name: "Tiempo de Cobranza", current: 45, target: 30, color: "#ef4444", inverse: true },
     ]
   } else {
-    // Default business growth chart
     title = "Crecimiento Empresarial Proyectado"
     description = "Proyección de crecimiento aplicando los frameworks People, Strategy, Execution y Cash:"
     chartData = [
