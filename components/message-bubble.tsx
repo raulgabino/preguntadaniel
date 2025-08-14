@@ -1,7 +1,7 @@
 import { User, Bot } from "lucide-react"
 import { Card } from "@/components/ui/card"
-import { FormattedResponse } from "./formatted-response"
 import { CitationSystem } from "./citation-system"
+import { ChartGenerator } from "./chart-generator"
 
 interface Message {
   id: string
@@ -9,6 +9,12 @@ interface Message {
   role: "user" | "assistant"
   timestamp: Date
   citations?: Array<{ source: string; timestamp: string }>
+  chartData?: {
+    type: string
+    title: string
+    data: any[]
+  }
+  isChart?: boolean
 }
 
 interface MessageBubbleProps {
@@ -17,12 +23,6 @@ interface MessageBubbleProps {
 
 export function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === "user"
-
-  const isStructuredResponse =
-    !isUser &&
-    (message.content.includes("Diagnóstico:") ||
-      message.content.includes("Marco aplicado:") ||
-      message.content.includes("Checklist:"))
 
   return (
     <div className={`flex gap-3 sm:gap-4 ${isUser ? "flex-row-reverse" : "flex-row"}`}>
@@ -45,8 +45,19 @@ export function MessageBubble({ message }: MessageBubbleProps) {
           </Card>
         ) : (
           <div className="space-y-3 sm:space-y-4">
-            {isStructuredResponse ? (
-              <FormattedResponse content={message.content} />
+            {message.isChart && message.chartData ? (
+              <div className="space-y-4">
+                <Card className="p-4 sm:p-5 bg-white border-amber-200">
+                  <p className="text-gray-800 leading-relaxed text-sm sm:text-base break-words mb-4">
+                    {message.content}
+                  </p>
+                </Card>
+                <ChartGenerator
+                  type={message.chartData.type}
+                  title={message.chartData.title}
+                  data={message.chartData.data}
+                />
+              </div>
             ) : (
               <Card className="p-3 sm:p-4 bg-white border-amber-200">
                 <p className="text-gray-800 leading-relaxed text-sm sm:text-base break-words">{message.content}</p>

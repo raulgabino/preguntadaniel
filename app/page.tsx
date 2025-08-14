@@ -28,7 +28,7 @@ export default function HomePage() {
     {
       id: "1",
       content:
-        "¡Hola! Soy Daniel Marcos, tu consultor de escalamiento empresarial. Estoy aquí para ayudarte a desbloquear el potencial de tu negocio usando mis frameworks probados: People, Strategy, Execution y Cash. ¿Qué desafío específico estás enfrentando hoy? Puedes usar los frameworks de la izquierda o las consultas rápidas para empezar.",
+        "¡Hola! Soy Daniel Marcos, tu consultor de escalamiento empresarial. Estoy aquí para ayudarte a desbloquear el potencial de tu negocio usando mis frameworks probados: People, Strategy, Execution y Cash.\n\n**¿Cómo usar esta plataforma?**\n• Haz preguntas específicas sobre tu negocio\n• Usa las consultas rápidas del menú lateral\n• Solicita un diagnóstico empresarial gratuito\n• Pide gráficos o visualizaciones escribiendo 'genera un gráfico de...'\n\n¿Qué desafío específico estás enfrentando hoy?",
       role: "assistant",
       timestamp: new Date(),
     },

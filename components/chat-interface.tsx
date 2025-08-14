@@ -162,7 +162,7 @@ export function ChatInterface({ messages, setMessages, businessProfile, onBusine
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Comparte tus objetivos y estrategicemos para el éxito..."
+                placeholder="Comparte tus objetivos y trabajemos juntos para el éxito..."
                 className="min-h-[60px] resize-none border-amber-200 focus:border-amber-400 focus:ring-amber-400"
                 disabled={isLoading}
               />

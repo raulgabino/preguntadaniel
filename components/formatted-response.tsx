@@ -1,14 +1,27 @@
 import { Brain, TrendingUp, Users, DollarSign, CheckCircle, Target, BarChart3, Lightbulb } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { ChartGenerator } from "./chart-generator"
+import { UnstructuredResponseFormatter } from "./unstructured-response-formatter"
 
 interface FormattedResponseProps {
   content: string
 }
 
 export function FormattedResponse({ content }: FormattedResponseProps) {
-  // Parse the structured response
   const sections = parseStructuredResponse(content)
+
+  // If content is unstructured (long paragraph), break it into readable sections
+  const isUnstructured = !sections.diagnosis && !sections.framework && !sections.checklist && content.length > 500
+
+  if (isUnstructured) {
+    return <UnstructuredResponseFormatter content={content} />
+  }
+
+  const shouldShowChart =
+    content.toLowerCase().includes("gráfico") ||
+    content.toLowerCase().includes("visualización") ||
+    content.toLowerCase().includes("genera un gráfico")
 
   const getFrameworkIcon = (framework: string) => {
     switch (framework.toLowerCase()) {
@@ -42,6 +55,14 @@ export function FormattedResponse({ content }: FormattedResponseProps) {
 
   return (
     <div className="space-y-6">
+      {/* Chart visualization if requested */}
+      {shouldShowChart && (
+        <ChartGenerator
+          topic={sections.framework?.name || "Análisis Empresarial"}
+          chartType={sections.framework?.name.toLowerCase() === "people" ? "pie" : "bar"}
+        />
+      )}
+
       {/* Diagnóstico */}
       {sections.diagnosis && (
         <Card className="p-4 border-l-4 border-l-amber-500 bg-amber-50">
@@ -273,4 +294,40 @@ function processSection(sections: ParsedResponse, sectionType: string, content: 
       sections.note = text
       break
   }
+}
+
+function breakIntoSections(content: string) {
+  const sentences = content.split(/(?<=[.!?])\s+/)
+  const sections = []
+  let currentSection = { content: "", bullets: [] as string[] }
+  let sentenceCount = 0
+
+  for (const sentence of sentences) {
+    // Detect if sentence contains numbered points or bullet-like content
+    if (sentence.match(/^\*\*?\d+\./) || sentence.match(/^-\s/) || sentence.match(/^\d+\.\s/)) {
+      if (currentSection.content.trim()) {
+        sections.push({ ...currentSection })
+        currentSection = { content: "", bullets: [] }
+        sentenceCount = 0
+      }
+      currentSection.bullets.push(sentence.replace(/^\*\*?\d+\.|\d+\.\s|^-\s/, "").trim())
+    } else {
+      currentSection.content += sentence + " "
+      sentenceCount++
+
+      // Break into new section every 3-4 sentences to avoid long blocks
+      if (sentenceCount >= 3 && sentence.match(/[.!?]$/)) {
+        sections.push({ ...currentSection })
+        currentSection = { content: "", bullets: [] }
+        sentenceCount = 0
+      }
+    }
+  }
+
+  // Add remaining content
+  if (currentSection.content.trim() || currentSection.bullets.length > 0) {
+    sections.push(currentSection)
+  }
+
+  return sections.filter((section) => section.content.trim() || section.bullets.length > 0)
 }
