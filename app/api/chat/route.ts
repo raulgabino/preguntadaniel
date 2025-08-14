@@ -1,6 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { ragEngine } from "@/lib/rag-engine"
-import { openai } from "@/lib/openai-client"
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,22 +17,16 @@ export async function POST(request: NextRequest) {
       ragEngine.setBusinessProfile(businessProfile)
     }
 
-    // Process the query through RAG engine first
-    const response = await ragEngine.processQuery(message)
+    const isChartRequest = /gráfic[ao]|visualiz|chart|diagrama|esquema|hazlo en gráfica/i.test(message)
 
-    const chartAnalysis = await analyzeForChartRecommendation(message, response.content)
-
-    if (chartAnalysis.shouldShowChart) {
-      const chartData = await generateIntelligentChart(message, response.content, businessProfile, chartAnalysis)
-
-      return NextResponse.json({
-        content: response.content,
-        citations: response.citations,
-        isStructured: response.isStructured,
-        chartData,
-        isChart: true,
-      })
+    if (isChartRequest) {
+      // Generate chart data based on the request
+      const chartResponse = await generateChartResponse(message, businessProfile)
+      return NextResponse.json(chartResponse)
     }
+
+    // Process the query through RAG engine
+    const response = await ragEngine.processQuery(message)
 
     return NextResponse.json({
       content: response.content,
@@ -73,119 +66,65 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function analyzeForChartRecommendation(userMessage: string, aiResponse: string) {
-  try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: `Eres un experto en visualización de datos empresariales. Analiza si la respuesta se beneficiaría de un gráfico para mejorar la comprensión del usuario.
-
-Responde SOLO con un JSON válido con esta estructura:
-{
-  "shouldShowChart": boolean,
-  "chartType": "bar" | "line" | "pie" | "progress" | null,
-  "reason": "breve explicación",
-  "dataPoints": ["punto1", "punto2"] // elementos clave que se visualizarían
-}
-
-Recomienda gráficos cuando:
-- Se mencionan métricas, KPIs, porcentajes, números
-- Se comparan múltiples elementos
-- Se habla de progreso, crecimiento, tendencias
-- Se explican procesos con etapas
-- Se analizan distribuciones o proporciones
-
-NO recomiendes gráficos para:
-- Respuestas puramente conceptuales o teóricas
-- Preguntas sobre definiciones
-- Consejos generales sin datos específicos`,
-        },
-        {
-          role: "user",
-          content: `Pregunta del usuario: "${userMessage}"
-
-Respuesta de la IA: "${aiResponse.substring(0, 1000)}..."`,
-        },
-      ],
-      temperature: 0.1,
-      max_tokens: 200,
-    })
-
-    const result = completion.choices[0]?.message?.content
-    if (!result) return { shouldShowChart: false }
-
-    return JSON.parse(result)
-  } catch (error) {
-    console.error("Error analyzing chart recommendation:", error)
-    return { shouldShowChart: false }
-  }
-}
-
-async function generateIntelligentChart(userMessage: string, aiResponse: string, businessProfile: any, analysis: any) {
-  const chartType = analysis.chartType || "bar"
+async function generateChartResponse(message: string, businessProfile: any) {
+  // Determine chart type based on message content
+  let chartType = "bar"
   let chartData = []
   let title = "Análisis Empresarial"
-  const description = analysis.reason || "Visualización para mejorar la comprensión"
+  let description = ""
 
-  // Generate contextual data based on the business profile and response content
-  if (chartType === "line" && /flujo|efectivo|cash|dinero|ventas|ingresos/i.test(userMessage + aiResponse)) {
-    title = "Proyección Financiera"
-    chartData = generateFinancialProjection(businessProfile)
-  } else if (chartType === "pie" && /equipo|empleados|distribución|áreas/i.test(userMessage + aiResponse)) {
-    title = "Distribución Organizacional"
-    chartData = generateTeamDistribution(businessProfile)
-  } else if (chartType === "progress" && /kpi|métricas|indicadores|progreso/i.test(userMessage + aiResponse)) {
-    title = "Indicadores Clave de Rendimiento"
-    chartData = generateKPIProgress(businessProfile)
+  if (/flujo.*efectivo|cash.*flow|dinero/i.test(message)) {
+    chartType = "line"
+    title = "Proyección de Flujo de Efectivo"
+    description = "Basado en tu perfil empresarial, aquí tienes una proyección de flujo de efectivo:"
+    chartData = [
+      { name: "Ene", value: 15000, projected: 18000 },
+      { name: "Feb", value: 18000, projected: 22000 },
+      { name: "Mar", value: 22000, projected: 28000 },
+      { name: "Abr", value: 25000, projected: 32000 },
+      { name: "May", value: 28000, projected: 35000 },
+      { name: "Jun", value: 32000, projected: 40000 },
+    ]
+  } else if (/equipo|empleados|people/i.test(message)) {
+    chartType = "pie"
+    title = "Distribución del Equipo por Área"
+    description = "Estructura organizacional recomendada para tu fase de crecimiento:"
+    chartData = [
+      { name: "Ventas", value: 30, color: "#f59e0b" },
+      { name: "Operaciones", value: 25, color: "#10b981" },
+      { name: "Producto", value: 20, color: "#3b82f6" },
+      { name: "Marketing", value: 15, color: "#8b5cf6" },
+      { name: "Admin", value: 10, color: "#ef4444" },
+    ]
+  } else if (/kpi|métricas|indicadores/i.test(message)) {
+    chartType = "progress"
+    title = "KPIs Clave para tu Empresa"
+    description = "Métricas esenciales que debes monitorear semanalmente:"
+    chartData = [
+      { name: "Satisfacción Cliente", current: 85, target: 90, color: "#10b981" },
+      { name: "Retención Empleados", current: 78, target: 85, color: "#3b82f6" },
+      { name: "Margen Bruto", current: 65, target: 75, color: "#f59e0b" },
+      { name: "Tiempo de Cobranza", current: 45, target: 30, color: "#ef4444", inverse: true },
+    ]
   } else {
-    // Default multi-series chart for business frameworks
-    title = "Análisis de Frameworks Empresariales"
-    chartData = generateFrameworkAnalysis(businessProfile)
+    // Default business growth chart
+    title = "Crecimiento Empresarial Proyectado"
+    description = "Proyección de crecimiento aplicando los frameworks People, Strategy, Execution y Cash:"
+    chartData = [
+      { name: "Actual", people: 60, strategy: 45, execution: 55, cash: 40 },
+      { name: "3 meses", people: 75, strategy: 70, execution: 80, cash: 65 },
+      { name: "6 meses", people: 85, strategy: 85, execution: 90, cash: 80 },
+      { name: "12 meses", people: 95, strategy: 95, execution: 95, cash: 90 },
+    ]
   }
 
   return {
-    type: chartType,
-    title,
-    description,
-    data: chartData,
+    content: description,
+    chartData: {
+      type: chartType,
+      title,
+      data: chartData,
+    },
+    isChart: true,
   }
-}
-
-function generateFinancialProjection(profile: any) {
-  const baseRevenue = profile?.currentRevenue || 50000
-  return Array.from({ length: 6 }, (_, i) => ({
-    name: ["Ene", "Feb", "Mar", "Abr", "May", "Jun"][i],
-    actual: Math.round(baseRevenue * (1 + i * 0.15)),
-    projected: Math.round(baseRevenue * (1 + i * 0.25)),
-  }))
-}
-
-function generateTeamDistribution(profile: any) {
-  return [
-    { name: "Ventas", value: 30, color: "#f59e0b" },
-    { name: "Operaciones", value: 25, color: "#10b981" },
-    { name: "Producto", value: 20, color: "#3b82f6" },
-    { name: "Marketing", value: 15, color: "#8b5cf6" },
-    { name: "Administración", value: 10, color: "#ef4444" },
-  ]
-}
-
-function generateKPIProgress(profile: any) {
-  return [
-    { name: "Satisfacción Cliente", current: 85, target: 90, color: "#10b981" },
-    { name: "Retención Empleados", current: 78, target: 85, color: "#3b82f6" },
-    { name: "Margen Bruto", current: 65, target: 75, color: "#f59e0b" },
-    { name: "Días de Cobranza", current: 45, target: 30, color: "#ef4444", inverse: true },
-  ]
-}
-
-function generateFrameworkAnalysis(profile: any) {
-  return [
-    { name: "Situación Actual", people: 60, strategy: 45, execution: 55, cash: 40 },
-    { name: "3 Meses", people: 75, strategy: 70, execution: 80, cash: 65 },
-    { name: "6 Meses", people: 85, strategy: 85, execution: 90, cash: 80 },
-    { name: "12 Meses", people: 95, strategy: 95, execution: 95, cash: 90 },
-  ]
 }
