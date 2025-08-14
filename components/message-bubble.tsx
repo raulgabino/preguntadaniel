@@ -2,6 +2,7 @@ import { User, Bot } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { CitationSystem } from "./citation-system"
 import { ChartGenerator } from "./chart-generator"
+import { FormattedResponse } from "./formatted-response" // Added FormattedResponse import
 
 interface Message {
   id: string
@@ -15,6 +16,7 @@ interface Message {
     data: any[]
   }
   isChart?: boolean
+  isStructured?: boolean // Added isStructured property for conditional rendering
 }
 
 interface MessageBubbleProps {
@@ -41,7 +43,9 @@ export function MessageBubble({ message }: MessageBubbleProps) {
       <div className={`flex-1 max-w-full sm:max-w-4xl ${isUser ? "text-right" : "text-left"}`}>
         {isUser ? (
           <Card className="p-3 sm:p-4 bg-emerald-50 border-emerald-200">
-            <p className="text-gray-800 leading-relaxed text-sm sm:text-base break-words">{message.content}</p>
+            <p className="text-gray-800 leading-relaxed text-sm sm:text-base break-words whitespace-pre-wrap">
+              {message.content}
+            </p>
           </Card>
         ) : (
           <div className="space-y-3 sm:space-y-4">
@@ -58,9 +62,13 @@ export function MessageBubble({ message }: MessageBubbleProps) {
                   data={message.chartData.data}
                 />
               </div>
+            ) : message.isStructured ? (
+              <FormattedResponse content={message.content} />
             ) : (
               <Card className="p-3 sm:p-4 bg-white border-amber-200">
-                <p className="text-gray-800 leading-relaxed text-sm sm:text-base break-words">{message.content}</p>
+                <p className="text-gray-800 leading-relaxed text-sm sm:text-base break-words whitespace-pre-wrap">
+                  {message.content}
+                </p>
               </Card>
             )}
 
