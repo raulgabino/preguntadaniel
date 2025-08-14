@@ -84,7 +84,7 @@ export function BusinessDiagnosticModal({ isOpen, onClose, onComplete }: Busines
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Building2 className="w-5 h-5 text-amber-600" />
-            Diagnóstico Empresarial - Daniel Marcos
+            Diagnóstico Empresarial - Juan Pérez
           </DialogTitle>
         </DialogHeader>
 

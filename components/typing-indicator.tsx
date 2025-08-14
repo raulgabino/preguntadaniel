@@ -4,11 +4,11 @@ interface TypingIndicatorProps {
   message?: string
 }
 
-export function TypingIndicator({ message = "Daniel está investigando del tema..." }: TypingIndicatorProps) {
+export function TypingIndicator({ message = "Juan Pérez está investigando del tema..." }: TypingIndicatorProps) {
   return (
     <div className="flex items-start gap-3 mb-6">
       <div className="w-8 h-8 rounded-full bg-amber-600 flex items-center justify-center flex-shrink-0">
-        <span className="text-white text-sm font-semibold">D</span>
+        <span className="text-white text-sm font-semibold">J</span>
       </div>
       <div className="flex-1">
         <div className="bg-white rounded-2xl rounded-tl-sm p-4 shadow-sm border border-amber-100">

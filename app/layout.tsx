@@ -16,8 +16,8 @@ const openSans = Open_Sans({
 })
 
 export const metadata: Metadata = {
-  title: "Daniel Marcos - Business Scaling Consultant",
-  description: "AI-powered business consulting with Daniel Marcos expertise",
+  title: "Juan Pérez - Business Scaling Consultant",
+  description: "AI-powered business consulting with Juan Pérez expertise",
   generator: "v0.app",
 }
 

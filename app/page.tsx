@@ -32,7 +32,7 @@ export default function HomePage() {
     {
       id: "1",
       content:
-        "¡Hola! Soy Daniel Marcos, tu consultor de escalamiento empresarial. Además de responder tus dudas sobre negocios, puedo ayudarte a practicar conversaciones difíciles mediante simulaciones interactivas.\n\n**¿Cómo usar esta plataforma?**\n• Haz preguntas específicas sobre tu negocio\n• Usa las consultas rápidas del menú lateral\n• Solicita un diagnóstico empresarial gratuito\n• Pide gráficos escribiendo 'genera un gráfico de...'\n• **NUEVO:** Practica conversaciones diciendo 'quiero practicar una conversación'\n\n¿Qué desafío específico estás enfrentando hoy?",
+        "¡Hola! Soy Juan Pérez, tu consultor de escalamiento empresarial. Además de responder tus dudas sobre negocios, puedo ayudarte a practicar conversaciones difíciles mediante simulaciones interactivas.\n\n**¿Cómo usar esta plataforma?**\n• Haz preguntas específicas sobre tu negocio\n• Usa las consultas rápidas del menú lateral\n• Solicita un diagnóstico empresarial gratuito\n• Pide gráficos escribiendo 'genera un gráfico de...'\n• **NUEVO:** Practica conversaciones diciendo 'quiero practicar una conversación'\n\n¿Qué desafío específico estás enfrentando hoy?",
       role: "assistant",
       timestamp: new Date(),
     },
@@ -193,7 +193,7 @@ export default function HomePage() {
             <Menu className="w-5 h-5" />
             <span className="text-sm font-medium">Consultas Rápidas</span>
           </Button>
-          <h1 className="font-bold text-lg text-amber-600">Daniel Marcos</h1>
+          <h1 className="font-bold text-lg text-amber-600">Juan Pérez</h1>
           <div className="w-9" /> {/* Spacer for centering */}
         </div>
 

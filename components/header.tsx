@@ -10,7 +10,7 @@ export function Header() {
             <MessageSquare className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="font-bold text-xl text-gray-800 font-sans">Daniel Marcos</h1>
+            <h1 className="font-bold text-xl text-gray-800 font-sans">Juan Pérez</h1>
             <p className="text-sm text-gray-600">Business Scaling Consultant</p>
           </div>
         </div>
