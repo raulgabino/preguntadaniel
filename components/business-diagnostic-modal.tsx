@@ -40,7 +40,6 @@ export function BusinessDiagnosticModal({ isOpen, onClose, onComplete }: Busines
     if (currentStep < diagnosticQuestions.length - 1) {
       setCurrentStep((prev) => prev + 1)
     } else {
-      // Complete diagnostic
       const phase = determineBusinessPhase(answers)
       const profile: BusinessProfile = {
         phase,
@@ -82,7 +81,7 @@ export function BusinessDiagnosticModal({ isOpen, onClose, onComplete }: Busines
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 dark:text-gray-100">
             <Building2 className="w-5 h-5 text-amber-600" />
             Diagnóstico Empresarial - Juan Pérez
           </DialogTitle>
@@ -90,7 +89,7 @@ export function BusinessDiagnosticModal({ isOpen, onClose, onComplete }: Busines
 
         <div className="space-y-6">
           <div className="space-y-2">
-            <div className="flex justify-between text-sm text-gray-600">
+            <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
               <span>
                 Pregunta {currentStep + 1} de {diagnosticQuestions.length}
               </span>
@@ -99,9 +98,9 @@ export function BusinessDiagnosticModal({ isOpen, onClose, onComplete }: Busines
             <Progress value={progress} className="h-2" />
           </div>
 
-          <Card className="p-6">
+          <Card className="p-6 dark:bg-gray-800">
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-800">{currentQuestion.question}</h3>
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-50">{currentQuestion.question}</h3>
 
               {currentQuestion.type === "single" && currentQuestion.options && (
                 <RadioGroup
@@ -112,7 +111,7 @@ export function BusinessDiagnosticModal({ isOpen, onClose, onComplete }: Busines
                   {currentQuestion.options.map((option) => (
                     <div key={option} className="flex items-center space-x-2">
                       <RadioGroupItem value={option} id={option} />
-                      <Label htmlFor={option} className="cursor-pointer">
+                      <Label htmlFor={option} className="cursor-pointer text-gray-700 dark:text-gray-300">
                         {option}
                       </Label>
                     </div>
@@ -122,25 +121,31 @@ export function BusinessDiagnosticModal({ isOpen, onClose, onComplete }: Busines
 
               {currentQuestion.type === "number" && (
                 <div className="space-y-2">
-                  <Label htmlFor="number-input">Número de empleados</Label>
+                  <Label htmlFor="number-input" className="dark:text-gray-300">
+                    Número de empleados
+                  </Label>
                   <Input
                     id="number-input"
                     type="number"
                     placeholder="Ej: 25"
                     value={answers[currentQuestion.id] || ""}
                     onChange={(e) => handleAnswer(Number.parseInt(e.target.value) || 0)}
+                    className="dark:bg-gray-700 dark:text-white"
                   />
                 </div>
               )}
 
               {currentQuestion.type === "text" && (
                 <div className="space-y-2">
-                  <Label htmlFor="text-input">Tu respuesta</Label>
+                  <Label htmlFor="text-input" className="dark:text-gray-300">
+                    Tu respuesta
+                  </Label>
                   <Input
                     id="text-input"
                     type="text"
                     value={answers[currentQuestion.id] || ""}
                     onChange={(e) => handleAnswer(e.target.value)}
+                    className="dark:bg-gray-700 dark:text-white"
                   />
                 </div>
               )}
@@ -151,7 +156,6 @@ export function BusinessDiagnosticModal({ isOpen, onClose, onComplete }: Busines
             <Button variant="outline" onClick={handlePrevious} disabled={currentStep === 0}>
               Anterior
             </Button>
-
             <Button onClick={handleNext} disabled={!canProceed} className="bg-amber-600 hover:bg-amber-700">
               {currentStep === diagnosticQuestions.length - 1 ? "Completar Diagnóstico" : "Siguiente"}
             </Button>
